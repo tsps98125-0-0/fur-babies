@@ -49,14 +49,52 @@ document.querySelectorAll('[data-org]').forEach(button => button.addEventListene
   document.querySelector('#thank-you-card').hidden = true;
   donationForm.hidden = false;
 }));
+
+// 使用隨機識別碼區分瀏覽器，不儲存姓名或聯絡資料。
+const communityUrl = 'https://reqvlazljogqhdytjrvm.supabase.co/rest/v1/';
+const communityKey = 'sb_publishable_-zrKonVr5tt62JMs-3lY4w_q_6kaZ9a';
+let visitorId;
+try {
+  visitorId = localStorage.getItem('毛日子訪客識別碼');
+  if (!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(visitorId || '')) {
+    visitorId = crypto.randomUUID();
+    localStorage.setItem('毛日子訪客識別碼', visitorId);
+  }
+} catch (error) { visitorId = null; }
+async function refreshCommunityCounts() {
+  try {
+    const response = await fetch(communityUrl + 'rpc/community_counts', { method: 'POST', headers: { apikey: communityKey, 'Content-Type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error('統計讀取失敗');
+    const counts = await response.json();
+    for (const key of ['visitors', 'organizations', 'platform']) {
+      if (!Number.isSafeInteger(counts[key]) || counts[key] < 0) throw new Error('統計格式錯誤');
+      document.querySelector('#count-' + key).textContent = counts[key].toLocaleString('zh-TW');
+    }
+    document.querySelector('#count-status').textContent = '以瀏覽器估算人數；支持人數依贊助心意送出紀錄計算。';
+  } catch (error) { document.querySelector('#count-status').textContent = '統計暫時無法更新，請稍後再試。'; }
+}
+async function registerVisitor() {
+  if (visitorId) {
+    try {
+      // 主鍵避免同一瀏覽器重複登記，重複資料直接略過。
+      await fetch(communityUrl + 'community_visitors', { method: 'POST', headers: { apikey: communityKey, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: JSON.stringify({ visitor_id: visitorId }), signal: AbortSignal.timeout(10000) });
+    } catch (error) {}
+  }
+  await refreshCommunityCounts();
+}
+registerVisitor();
+setInterval(() => { if (!document.hidden) refreshCommunityCounts(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshCommunityCounts(); });
+
 // 贊助僅供練習，送出的是預覽紀錄，不代表付款。
 async function saveSponsorship(data) {
   const response = await fetch('https://reqvlazljogqhdytjrvm.supabase.co/rest/v1/sponsorship_previews', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_-zrKonVr5tt62JMs-3lY4w_q_6kaZ9a', 'Prefer': 'return=minimal' },
-    body: JSON.stringify(data)
+    body: JSON.stringify({ ...data, visitor_id: visitorId })
   });
   if (!response.ok) throw new Error('儲存失敗');
+  refreshCommunityCounts();
 }
 donationForm.addEventListener('submit', async event => {
   event.preventDefault();
