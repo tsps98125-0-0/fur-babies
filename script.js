@@ -217,3 +217,8 @@ adoptionForm.addEventListener('submit', event => {
   try { localStorage.setItem('毛日子領養申請', JSON.stringify(applications)); adoptionStatus.textContent = '已儲存在目前瀏覽器，這不是實際送件。'; adoptionForm.reset(); } catch (error) { adoptionStatus.textContent = '無法儲存申請，請檢查瀏覽器儲存設定。'; }
 });
 document.querySelector('#manage-open').addEventListener('click', renderApplications);
+
+// 示範組織尚無真實網址，避免導向錯誤的網站。
+document.querySelectorAll('[data-org-info]').forEach(button => button.addEventListener('click', () => {
+  openPopup('了解' + button.dataset.orgInfo, '這是示範組織，目前沒有實際官網或聯絡資訊。未來加入真實合作組織後，可在這裡提供官方網站連結。');
+}));

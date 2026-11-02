@@ -34,3 +34,7 @@
 .font-controls{min-width:250px;justify-content:space-between;gap:10px;padding:6px 12px;border-radius:24px}.accessibility-bar .font-controls{padding:6px 12px}.font-controls button{min-width:38px;min-height:38px;padding:0 9px}.font-controls #font-reset{min-width:52px}#font-size-status{min-width:3.5em}@media(max-width:600px){.accessibility-bar .font-controls{min-width:220px;justify-content:space-between;gap:6px;padding:5px 10px}.accessibility-bar .font-controls>span:first-child{display:inline}.font-controls button{min-width:34px;min-height:34px}.font-controls #font-reset{min-width:48px}}
 
 .search-filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:10px;align-items:end;margin-top:28px}.search-filters label{display:grid;gap:6px;font-size:.8rem;color:#53684e;font-weight:700}.search-filters select{min-width:0;padding:10px;font-size:.8rem}.search-filters button{border:1px solid #b5c4ae;background:white;color:#53684e;border-radius:20px;padding:10px;white-space:nowrap}#filter-result{font-size:.8rem;color:#70806b}@media(max-width:900px){.search-filters{grid-template-columns:repeat(3,1fr)}}@media(max-width:600px){.search-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+#adoption-form fieldset{border:1px solid #d4decf;border-radius:8px;padding:16px}#adoption-form legend{color:#687b62;font-size:.8rem;line-height:1.6}#adoption-form :disabled{cursor:not-allowed;opacity:.65}
+
+.org-actions{display:flex;gap:10px;flex-wrap:wrap}.org-actions .outline-button{margin:0}
