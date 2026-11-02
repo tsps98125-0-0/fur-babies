@@ -206,15 +206,31 @@ list.addEventListener('click', event => {
 document.querySelector('#adoption-close').addEventListener('click', () => { adoptionOverlay.hidden = true; });
 adoptionOverlay.addEventListener('click', event => { if (event.target === adoptionOverlay) adoptionOverlay.hidden = true; });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') adoptionOverlay.hidden = true; });
-adoptionForm.addEventListener('submit', event => {
+adoptionForm.addEventListener('submit', async event => {
   event.preventDefault();
   const name = document.querySelector('#applicant-name').value.trim();
   const contact = document.querySelector('#applicant-contact').value.trim();
   const note = document.querySelector('#applicant-message').value.trim();
   const followup = document.querySelector('#followup-contact').value.trim();
   if (!name || !contact || !followup) { adoptionStatus.textContent = '請填寫稱呼、聯絡方式與領養後聯絡管道。'; return; }
-  const applications = readApplications(); applications.push({pet:selectedPet, name, contact, followup, note, status:'待審核'});
-  try { localStorage.setItem('毛日子領養申請', JSON.stringify(applications)); adoptionStatus.textContent = '已儲存在目前瀏覽器，這不是實際送件。'; adoptionForm.reset(); } catch (error) { adoptionStatus.textContent = '無法儲存申請，請檢查瀏覽器儲存設定。'; }
+  // 公開金鑰只用於新增申請，不能讀取其他人的資料。
+  const button = adoptionForm.querySelector('button[type="submit"]');
+  button.disabled = true;
+  adoptionStatus.textContent = '正在送出申請，請稍候。';
+  try {
+    const response = await fetch('https://reqvlazljogqhdytjrvm.supabase.co/rest/v1/adoption_applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_-zrKonVr5tt62JMs-3lY4w_q_6kaZ9a', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ pet: selectedPet, name, contact, followup, note })
+    });
+    if (!response.ok) throw new Error('送出失敗');
+    adoptionForm.reset();
+    adoptionStatus.textContent = '申請已送出，感謝你的填寫。';
+  } catch (error) {
+    adoptionStatus.textContent = '送出失敗，請檢查網路連線後再試一次。';
+  } finally {
+    button.disabled = false;
+  }
 });
 document.querySelector('#manage-open').addEventListener('click', renderApplications);
 
