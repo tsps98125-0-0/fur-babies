@@ -77,8 +77,13 @@ async function registerVisitor() {
   if (visitorId) {
     try {
       // 主鍵避免同一瀏覽器重複登記，重複資料直接略過。
-      await fetch(communityUrl + 'community_visitors', { method: 'POST', headers: { apikey: communityKey, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: JSON.stringify({ visitor_id: visitorId }), signal: AbortSignal.timeout(10000) });
-    } catch (error) {}
+      const response = await fetch(communityUrl + 'community_visitors', { method: 'POST', headers: { apikey: communityKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ visitor_id: visitorId }), signal: AbortSignal.timeout(10000) });
+      if (!response.ok && response.status !== 409) throw new Error('訪客登記失敗');
+    } catch (error) {
+      await refreshCommunityCounts();
+      document.querySelector('#count-status').textContent = '這次瀏覽暫時無法登記，請重新整理後再試。';
+      return;
+    }
   }
   await refreshCommunityCounts();
 }
