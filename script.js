@@ -1,12 +1,12 @@
 // 這些是示範資料，正式上線時可替換成真實毛孩資訊。
 const animals = [
-  { name: '阿萌', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '男生・約 1 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
+  { name: '阿萌', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '男生・1 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
   { name: '花花', type: '貓咪', icon: '🐈', image: '花花.jpg', detail: '女生・約 1 歲', story: '有一點害羞，熟悉之後會悄悄靠近你。', org: '小小尾巴守護協會' },
   { name: '阿福', type: '狗狗', icon: '🐶', image: '阿福.jpg', detail: '男生・約 4 歲', story: '愛笑也愛撒嬌，希望每天都能和你一起玩。', org: '暖心動物之家' },
   { name: '小圓', type: '貓咪', icon: '🐱', image: '小圓.jpg', detail: '女生・約 2 歲', story: '喜歡安靜地陪伴，也喜歡被溫柔摸摸頭。', org: '小小尾巴守護協會' }
 ];
 // 優先使用目前瀏覽器已儲存的資料。
-try { const saved = JSON.parse(localStorage.getItem('毛日子毛孩資料')); if (Array.isArray(saved)) { saved.forEach(animal => { if (animal.name === '小麥' && animal.org === '暖心動物之家' && animal.story === '喜歡曬太陽和散步，是個溫柔又親人的孩子。') { animal.name = '阿萌'; animal.detail = '約 1 歲'; } }); animals.splice(0, animals.length, ...saved); } } catch (error) {}
+try { const saved = JSON.parse(localStorage.getItem('毛日子毛孩資料')); if (Array.isArray(saved)) { saved.forEach(animal => { if (animal.name === '小麥' && animal.org === '暖心動物之家' && animal.story === '喜歡曬太陽和散步，是個溫柔又親人的孩子。') { animal.name = '阿萌'; animal.detail = '男生・1 歲'; } }); saved.forEach(animal => { if (animal.name === '阿萌' && animal.image === '肥萌.jpg' && animal.detail === '約 1 歲') animal.detail = '男生・1 歲'; }); animals.splice(0, animals.length, ...saved); } } catch (error) {}
 const list = document.querySelector('#animal-list');
 const overlay = document.querySelector('#overlay');
 const title = document.querySelector('#popup-title');
