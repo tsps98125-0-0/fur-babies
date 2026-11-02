@@ -1,0 +1,220 @@
+// 這些是示範資料，正式上線時可替換成真實毛孩資訊。
+const animals = [
+  { name: '小麥', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '男生・約 2 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
+  { name: '花花', type: '貓咪', icon: '🐈', image: '花花.jpg', detail: '女生・約 1 歲', story: '有一點害羞，熟悉之後會悄悄靠近你。', org: '小小尾巴守護協會' },
+  { name: '阿福', type: '狗狗', icon: '🐶', image: '阿福.jpg', detail: '男生・約 4 歲', story: '愛笑也愛撒嬌，希望每天都能和你一起玩。', org: '暖心動物之家' },
+  { name: '小圓', type: '貓咪', icon: '🐱', image: '小圓.jpg', detail: '女生・約 2 歲', story: '喜歡安靜地陪伴，也喜歡被溫柔摸摸頭。', org: '小小尾巴守護協會' }
+];
+// 優先使用目前瀏覽器已儲存的資料。
+try { const saved = JSON.parse(localStorage.getItem('毛日子毛孩資料')); if (Array.isArray(saved)) animals.splice(0, animals.length, ...saved); } catch (error) {}
+const list = document.querySelector('#animal-list');
+const overlay = document.querySelector('#overlay');
+const title = document.querySelector('#popup-title');
+const message = document.querySelector('#popup-message');
+const donationForm = document.querySelector('#donation-form');
+
+// 根據選擇的種類更新畫面。
+function escapeText(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function showAnimals(filter) {
+  list.innerHTML = animals.filter(animal => filter === '全部' || animal.type === filter).map(item => { const animal = Object.fromEntries(Object.entries(item).map(([key, value]) => [key, escapeText(value)])); return `
+    <article class="animal-card"><div class="animal-art"><span>示範照片</span>${animal.icon}<img src="${animal.image}" alt="${animal.name}的示意照片"></div><h3>${animal.name}</h3><p class="details">${animal.type} ／ ${animal.detail}</p><p class="pet-status">${animal.status || '開放領養'} ／ 更新日期：${animal.updated || '2026-11-02（示範）'}</p><p>${animal.story}</p><button data-animal="${animal.name}"><span>⌂ ${animal.org}</span><strong>認識我 ↗</strong></button>${animal.status === '已送養' || animal.status === '審核中' ? '' : `<button class="adopt-button" data-adopt="${animal.name}">我要領養 ↗</button>`}</article>
+  `; }).join('');
+}
+function openPopup(heading, content) {
+  title.textContent = heading;
+  message.textContent = content;
+  donationForm.hidden = true;
+  overlay.hidden = false;
+  document.querySelector('#close-popup').focus();
+}
+function closePopup() { overlay.hidden = true; }
+
+document.querySelectorAll('.filter').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('.filter').forEach(item => item.classList.remove('active'));
+  button.classList.add('active');
+  showAnimals(button.dataset.filter);
+}));
+list.addEventListener('click', event => {
+  const button = event.target.closest('[data-animal]');
+  if (!button) return;
+  const animal = animals.find(item => item.name === button.dataset.animal);
+  openPopup('認識' + animal.name, animal.detail + '。' + animal.story + ' 這是示範資料，領養與贊助尚未開放。');
+});
+document.querySelectorAll('[data-org]').forEach(button => button.addEventListener('click', () => {
+  openPopup('把心意送給牠們', '這項贊助支持所選組織，示範用途包含飼料、醫療與院區照護；不屬於平台維護費。目前僅供預覽，尚未開放付款。');
+  donationForm.reset();
+  document.querySelector('#donation-org').value = button.dataset.org;
+  document.querySelector('#donation-result').textContent = '';
+  document.querySelector('#thank-you-card').hidden = true;
+  donationForm.hidden = false;
+}));
+donationForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const org = document.querySelector('#donation-org').value;
+  const purpose = document.querySelector('#donation-purpose').value;
+  const amount = document.querySelector('#donation-amount').value;
+  document.querySelector('#donation-result').textContent = '贊助預覽：' + org + ' ／ 新臺幣 ' + amount + ' 元 ／ ' + purpose + '。尚未付款或寄送。';
+  // 從目前組織的毛孩資料挑選有照片的一位，製作感謝明信片。
+  const card = document.querySelector('#thank-you-card');
+  card.replaceChildren();
+  const pet = animals.find(animal => animal.org === org && animal.image);
+  if (pet) {
+    const photo = document.createElement('img'); photo.src = pet.image; photo.alt = org + '的毛孩' + pet.name + '照片'; card.append(photo);
+  }
+  const caption = document.createElement('div');
+  const heading = document.createElement('strong'); heading.textContent = '謝謝你，讓愛繼續發光 ✳';
+  const text = document.createElement('p'); text.textContent = '謝謝你願意支持「' + org + '」！你的溫柔，讓照顧毛孩的路多了一份力量。' + (pet ? '這是 ' + pet.name + ' 送給你的感謝。' : '期待與你分享毛孩們的故事。');
+  const note = document.createElement('small'); note.textContent = '示範明信片：尚未付款、寄送或完成贊助。';
+  caption.append(heading, text, note); card.append(caption); card.hidden = false;
+});
+document.querySelectorAll('[data-plan]').forEach(button => button.addEventListener('click', () => openPopup('支持毛日子', '你選擇了「' + button.dataset.plan + '」。這是平台維護贊助的示範方案，目前尚未開放付款或發送獎勵。')));
+document.querySelector('#join-button').addEventListener('click', () => openPopup('邀請組織加入', '謝謝你為動物付出。組織加入與資料刊登功能目前尚未開放。'));
+document.querySelector('#close-popup').addEventListener('click', closePopup);
+overlay.addEventListener('click', event => { if (event.target === overlay) closePopup(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closePopup(); });
+showAnimals('全部');
+
+// 照片無法載入時，顯示下方的動物圖案。
+document.addEventListener('error', event => {
+  if (event.target.tagName === 'IMG') event.target.style.display = 'none';
+}, true);
+
+// 音樂檔放在網站資料夾後，可在這個清單加入名稱與檔案。
+const playlist = [{ title: '溫柔旋律', file: '溫柔旋律.wav' }];
+const music = new Audio();
+const musicButton = document.querySelector('#music-button');
+const musicList = document.querySelector('#music-list');
+const musicProgress = document.querySelector('#music-progress');
+const musicTime = document.querySelector('#music-time');
+const musicMessage = document.querySelector('#music-message');
+let currentTrack = 0;
+playlist.forEach((track, index) => { const option = document.createElement('option'); option.value = index; option.textContent = track.title; musicList.append(option); });
+function timeText(seconds) { if (!Number.isFinite(seconds)) return '0:00'; return Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0'); }
+function updateMusic() {
+  const duration = Number.isFinite(music.duration) ? music.duration : 0;
+  musicProgress.value = duration ? Math.round(music.currentTime / duration * 1000) : 0;
+  musicTime.textContent = timeText(music.currentTime) + ' / ' + timeText(duration);
+  musicButton.textContent = music.paused ? '♫ 播放' : '♫ 暫停';
+  musicButton.setAttribute('aria-pressed', String(!music.paused));
+}
+function chooseTrack(index) { currentTrack = index; music.src = playlist[index].file; musicList.value = String(index); musicMessage.textContent = ''; music.load(); updateMusic(); }
+async function startMusic() { try { await music.play(); } catch (error) { musicMessage.textContent = '音樂無法播放，請確認檔案存在。'; } updateMusic(); }
+function randomTrack() { if (playlist.length < 2) return 0; let next = currentTrack; while (next === currentTrack) next = Math.floor(Math.random() * playlist.length); return next; }
+musicButton.addEventListener('click', () => { if (music.paused) startMusic(); else { music.pause(); updateMusic(); } });
+musicList.addEventListener('change', () => { const playing = !music.paused; chooseTrack(Number(musicList.value)); if (playing) startMusic(); });
+document.querySelector('#music-next').addEventListener('click', () => { chooseTrack(randomTrack()); startMusic(); });
+musicProgress.addEventListener('input', () => { if (Number.isFinite(music.duration)) music.currentTime = music.duration * Number(musicProgress.value) / 1000; });
+music.addEventListener('timeupdate', updateMusic);
+music.addEventListener('loadedmetadata', updateMusic);
+music.addEventListener('ended', () => { chooseTrack(randomTrack()); startMusic(); });
+music.addEventListener('error', () => { musicMessage.textContent = '音樂無法載入，請確認檔案存在。'; updateMusic(); });
+chooseTrack(0);
+
+// 調整根字體大小，並記住使用者的選擇。
+const fontSmaller = document.querySelector('#font-smaller');
+const fontLarger = document.querySelector('#font-larger');
+const fontStatus = document.querySelector('#font-size-status');
+let fontSize = 100;
+try {
+  const savedSize = Number(localStorage.getItem('毛日子字體大小'));
+  if (savedSize >= 70 && savedSize <= 150) fontSize = savedSize;
+} catch (error) {
+  // 無法儲存設定時，仍可在目前頁面調整字體。
+}
+function updateFontSize() {
+  document.documentElement.style.fontSize = fontSize + '%';
+  fontStatus.textContent = fontSize + '%';
+  fontSmaller.disabled = fontSize <= 70;
+  fontLarger.disabled = fontSize >= 150;
+  try { localStorage.setItem('毛日子字體大小', String(fontSize)); } catch (error) {}
+}
+fontSmaller.addEventListener('click', () => { fontSize = Math.max(70, fontSize - 10); updateFontSize(); });
+fontLarger.addEventListener('click', () => { fontSize = Math.min(150, fontSize + 10); updateFontSize(); });
+document.querySelector('#font-reset').addEventListener('click', () => { fontSize = 100; updateFontSize(); });
+updateFontSize();
+
+// 管理資料僅儲存在目前瀏覽器，移除資料不會刪除任何檔案。
+const manageOverlay = document.querySelector('#manage-overlay');
+const manageForm = document.querySelector('#manage-form');
+const manageList = document.querySelector('#manage-list');
+const manageStatus = document.querySelector('#manage-status');
+const field = id => document.querySelector('#' + id);
+function renderManageList() {
+  manageList.innerHTML = '';
+  animals.forEach((animal, index) => {
+    const row = document.createElement('div'); row.className = 'manage-row';
+    const label = document.createElement('span'); label.textContent = animal.name + ' ／ ' + animal.org;
+    const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '編輯';
+    edit.addEventListener('click', () => { field('edit-index').value = index; field('pet-name').value = animal.name; field('pet-type').value = animal.type; field('pet-detail').value = animal.detail; field('pet-story').value = animal.story; field('pet-org').value = animal.org; field('pet-status').value = animal.status || '開放領養'; field('pet-photo').value = ''; manageStatus.textContent = '正在編輯「' + animal.name + '」，不選照片會保留原照片。'; });
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除資料';
+    remove.addEventListener('click', () => { if (!confirm('確定移除「' + animal.name + '」的資料嗎？照片檔案不會被刪除。')) return; const next = animals.filter((_, i) => i !== index); try { localStorage.setItem('毛日子毛孩資料', JSON.stringify(next)); animals.splice(0, animals.length, ...next); renderManageList(); showAnimals('全部'); manageStatus.textContent = '已移除資料。'; } catch (error) { manageStatus.textContent = '無法儲存，資料沒有變更。'; } });
+    row.append(label, edit, remove); manageList.append(row);
+  });
+}
+field('manage-open').addEventListener('click', () => { renderManageList(); manageOverlay.hidden = false; field('manage-close').focus(); });
+field('manage-close').addEventListener('click', () => { manageOverlay.hidden = true; });
+manageOverlay.addEventListener('click', event => { if (event.target === manageOverlay) manageOverlay.hidden = true; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') manageOverlay.hidden = true; });
+field('manage-clear').addEventListener('click', () => { manageForm.reset(); field('edit-index').value = ''; manageStatus.textContent = ''; });
+manageForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const raw = field('edit-index').value; const index = raw === '' ? -1 : Number(raw); const file = field('pet-photo').files[0];
+  if (file && file.size > 1500000) { manageStatus.textContent = '請選擇小於一點五百萬位元組的照片。'; return; }
+  let image = index >= 0 ? animals[index].image : '';
+  if (file) { try { image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); } catch (error) { manageStatus.textContent = '照片讀取失敗。'; return; } }
+  const type = field('pet-type').value;
+  const pet = {name: field('pet-name').value.trim(), type, icon: type === '狗狗' ? '🐕' : '🐈', status: field('pet-status').value, updated: new Date().toLocaleDateString('sv-SE'), detail: field('pet-detail').value.trim(), story: field('pet-story').value.trim(), org: field('pet-org').value.trim(), image};
+  if (!pet.name || !pet.detail || !pet.story || !pet.org) { manageStatus.textContent = '請填寫完整資料。'; return; }
+  const next = animals.slice(); if (index >= 0) next[index] = pet; else next.push(pet);
+  try { localStorage.setItem('毛日子毛孩資料', JSON.stringify(next)); animals.splice(0, animals.length, ...next); manageForm.reset(); field('edit-index').value = ''; renderManageList(); showAnimals('全部'); manageStatus.textContent = '已儲存在目前瀏覽器。'; } catch (error) { manageStatus.textContent = '儲存失敗，可能是瀏覽器空間不足或不允許儲存。'; }
+});
+
+// 領養申請與審核紀錄只儲存在此瀏覽器。
+const adoptionOverlay = document.querySelector('#adoption-overlay');
+const adoptionForm = document.querySelector('#adoption-form');
+const adoptionStatus = document.querySelector('#adoption-status');
+let selectedPet = '';
+function readApplications() {
+  try { const data = JSON.parse(localStorage.getItem('毛日子領養申請')); return Array.isArray(data) ? data : []; } catch (error) { return []; }
+}
+function renderApplications() {
+  const container = document.querySelector('#application-list');
+  container.replaceChildren();
+  const applications = readApplications();
+  if (!applications.length) { container.textContent = '目前沒有領養申請。'; return; }
+  applications.forEach((item, index) => {
+    const row = document.createElement('div'); row.className = 'application-row';
+    const info = document.createElement('p'); info.textContent = '毛孩：' + item.pet + ' ／ 申請人：' + item.name + ' ／ 聯絡方式：' + item.contact + ' ／ 領養後聯絡管道：' + (item.followup || '尚未提供') + ' ／ 留言：' + (item.note || '無') + ' ／ 狀態：' + item.status;
+    const select = document.createElement('select'); select.setAttribute('aria-label', '更新申請審核狀態');
+    ['待審核', '審核中', '已通過', '未通過'].forEach(status => { const option = document.createElement('option'); option.value = status; option.textContent = status; select.append(option); });
+    select.value = item.status;
+    select.addEventListener('change', () => { const updated = readApplications(); if (!updated[index]) return; updated[index].status = select.value; try { localStorage.setItem('毛日子領養申請', JSON.stringify(updated)); renderApplications(); } catch (error) { alert('無法儲存審核結果。'); renderApplications(); } });
+    row.append(info, select);
+    const followupLabel = document.createElement('label'); followupLabel.textContent = '後續追蹤紀錄';
+    const followupInput = document.createElement('textarea'); followupInput.rows = 3; followupInput.maxLength = 300; followupInput.value = item.followupNote || ''; followupInput.placeholder = '例如聯繫日期與追蹤情況';
+    const saveFollowup = document.createElement('button'); saveFollowup.type = 'button'; saveFollowup.className = 'outline-button'; saveFollowup.textContent = '儲存追蹤紀錄';
+    const feedback = document.createElement('p'); feedback.setAttribute('aria-live', 'polite');
+    saveFollowup.addEventListener('click', () => { const updated = readApplications(); if (!updated[index]) return; updated[index].followupNote = followupInput.value.trim(); try { localStorage.setItem('毛日子領養申請', JSON.stringify(updated)); feedback.textContent = '已儲存在目前瀏覽器。'; } catch (error) { feedback.textContent = '無法儲存追蹤紀錄。'; } });
+    followupLabel.append(followupInput); row.append(followupLabel, saveFollowup, feedback); container.append(row);
+  });
+}
+list.addEventListener('click', event => {
+  const button = event.target.closest('[data-adopt]'); if (!button) return;
+  selectedPet = button.dataset.adopt; adoptionForm.reset(); adoptionStatus.textContent = '';
+  document.querySelector('#adoption-title').textContent = '申請領養' + selectedPet;
+  adoptionOverlay.hidden = false; document.querySelector('#applicant-name').focus();
+});
+document.querySelector('#adoption-close').addEventListener('click', () => { adoptionOverlay.hidden = true; });
+adoptionOverlay.addEventListener('click', event => { if (event.target === adoptionOverlay) adoptionOverlay.hidden = true; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') adoptionOverlay.hidden = true; });
+adoptionForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const name = document.querySelector('#applicant-name').value.trim();
+  const contact = document.querySelector('#applicant-contact').value.trim();
+  const note = document.querySelector('#applicant-message').value.trim();
+  const followup = document.querySelector('#followup-contact').value.trim();
+  if (!name || !contact || !followup) { adoptionStatus.textContent = '請填寫稱呼、聯絡方式與領養後聯絡管道。'; return; }
+  const applications = readApplications(); applications.push({pet:selectedPet, name, contact, followup, note, status:'待審核'});
+  try { localStorage.setItem('毛日子領養申請', JSON.stringify(applications)); adoptionStatus.textContent = '已儲存在目前瀏覽器，這不是實際送件。'; adoptionForm.reset(); } catch (error) { adoptionStatus.textContent = '無法儲存申請，請檢查瀏覽器儲存設定。'; }
+});
+document.querySelector('#manage-open').addEventListener('click', renderApplications);
