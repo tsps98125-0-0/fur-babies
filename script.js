@@ -1,12 +1,12 @@
 // 這些是示範資料，正式上線時可替換成真實毛孩資訊。
 const animals = [
-  { name: '小麥', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '男生・約 2 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
+  { name: '阿萌', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '約 1 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
   { name: '花花', type: '貓咪', icon: '🐈', image: '花花.jpg', detail: '女生・約 1 歲', story: '有一點害羞，熟悉之後會悄悄靠近你。', org: '小小尾巴守護協會' },
   { name: '阿福', type: '狗狗', icon: '🐶', image: '阿福.jpg', detail: '男生・約 4 歲', story: '愛笑也愛撒嬌，希望每天都能和你一起玩。', org: '暖心動物之家' },
   { name: '小圓', type: '貓咪', icon: '🐱', image: '小圓.jpg', detail: '女生・約 2 歲', story: '喜歡安靜地陪伴，也喜歡被溫柔摸摸頭。', org: '小小尾巴守護協會' }
 ];
 // 優先使用目前瀏覽器已儲存的資料。
-try { const saved = JSON.parse(localStorage.getItem('毛日子毛孩資料')); if (Array.isArray(saved)) animals.splice(0, animals.length, ...saved); } catch (error) {}
+try { const saved = JSON.parse(localStorage.getItem('毛日子毛孩資料')); if (Array.isArray(saved)) { saved.forEach(animal => { if (animal.name === '小麥' && animal.org === '暖心動物之家' && animal.story === '喜歡曬太陽和散步，是個溫柔又親人的孩子。') { animal.name = '阿萌'; animal.detail = '約 1 歲'; } }); animals.splice(0, animals.length, ...saved); } } catch (error) {}
 const list = document.querySelector('#animal-list');
 const overlay = document.querySelector('#overlay');
 const title = document.querySelector('#popup-title');
@@ -16,7 +16,8 @@ const donationForm = document.querySelector('#donation-form');
 // 根據選擇的種類更新畫面。
 function escapeText(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function showAnimals(filter) {
-  list.innerHTML = animals.filter(animal => filter === '全部' || animal.type === filter).map(item => { const animal = Object.fromEntries(Object.entries(item).map(([key, value]) => [key, escapeText(value)])); return `
+  const results = animals.filter(animal => filter === '全部' || animal.type === filter);
+  list.innerHTML = results.map(item => { const animal = Object.fromEntries(Object.entries(item).map(([key, value]) => [key, escapeText(value)])); return `
     <article class="animal-card"><div class="animal-art"><span>示範照片</span>${animal.icon}<img src="${animal.image}" alt="${animal.name}的示意照片"></div><h3>${animal.name}</h3><p class="details">${animal.type} ／ ${animal.detail}</p><p class="pet-status">${animal.status || '開放領養'} ／ 更新日期：${animal.updated || '2026-11-02（示範）'}</p><p>${animal.story}</p><button data-animal="${animal.name}"><span>⌂ ${animal.org}</span><strong>認識我 ↗</strong></button>${animal.status === '已送養' || animal.status === '審核中' ? '' : `<button class="adopt-button" data-adopt="${animal.name}">我要領養 ↗</button>`}</article>
   `; }).join('');
 }
@@ -99,14 +100,12 @@ function updateMusic() {
 }
 function chooseTrack(index) { currentTrack = index; music.src = playlist[index].file; musicList.value = String(index); musicMessage.textContent = ''; music.load(); updateMusic(); }
 async function startMusic() { try { await music.play(); } catch (error) { musicMessage.textContent = '音樂無法播放，請確認檔案存在。'; } updateMusic(); }
-function randomTrack() { if (playlist.length < 2) return 0; let next = currentTrack; while (next === currentTrack) next = Math.floor(Math.random() * playlist.length); return next; }
 musicButton.addEventListener('click', () => { if (music.paused) startMusic(); else { music.pause(); updateMusic(); } });
 musicList.addEventListener('change', () => { const playing = !music.paused; chooseTrack(Number(musicList.value)); if (playing) startMusic(); });
-document.querySelector('#music-next').addEventListener('click', () => { chooseTrack(randomTrack()); startMusic(); });
 musicProgress.addEventListener('input', () => { if (Number.isFinite(music.duration)) music.currentTime = music.duration * Number(musicProgress.value) / 1000; });
 music.addEventListener('timeupdate', updateMusic);
 music.addEventListener('loadedmetadata', updateMusic);
-music.addEventListener('ended', () => { chooseTrack(randomTrack()); startMusic(); });
+music.addEventListener('ended', () => { chooseTrack((currentTrack + 1) % playlist.length); startMusic(); });
 music.addEventListener('error', () => { musicMessage.textContent = '音樂無法載入，請確認檔案存在。'; updateMusic(); });
 chooseTrack(0);
 
