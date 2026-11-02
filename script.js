@@ -222,3 +222,43 @@ document.querySelector('#manage-open').addEventListener('click', renderApplicati
 document.querySelectorAll('[data-org-info]').forEach(button => button.addEventListener('click', () => {
   openPopup('了解' + button.dataset.orgInfo, '這是示範組織，目前沒有實際官網或聯絡資訊。未來加入真實合作組織後，可在這裡提供官方網站連結。');
 }));
+
+// 公告僅儲存在目前瀏覽器；移除公告不會刪除檔案。
+const sampleNews = [
+  {org:'暖心動物之家', title:'毛孩日常照護近況', content:'未來可在這裡分享毛孩照護、活動和物資需求等消息。', date:'日期待提供', sample:true},
+  {org:'小小尾巴守護協會', title:'一起關注救援與認養', content:'未來可在這裡發布認養活動與協會最新公告。', date:'日期待提供', sample:true}
+];
+function readNews() { try { const saved = JSON.parse(localStorage.getItem('毛日子協會公告')); return Array.isArray(saved) ? saved : sampleNews; } catch (error) { return sampleNews; } }
+function renderNews() {
+  const list = document.querySelector('#news-list'); const manage = document.querySelector('#news-manage-list');
+  list.replaceChildren(); manage.replaceChildren();
+  const news = readNews();
+  if (!news.length) list.textContent = '目前沒有公告。';
+  news.forEach((item, index) => {
+    const article = document.createElement('article'); const content = document.createElement('div');
+    const source = document.createElement('span'); source.textContent = item.org + (item.sample ? ' ／ 示範消息' : ' ／ 本機公告');
+    const heading = document.createElement('h4'); heading.textContent = item.title;
+    const paragraph = document.createElement('p'); paragraph.textContent = item.content;
+    const date = document.createElement('span'); date.className = 'news-date'; date.textContent = item.date;
+    content.append(source, heading, paragraph); article.append(content, date); list.append(article);
+    const row = document.createElement('div'); row.className = 'manage-row';
+    const label = document.createElement('span'); label.textContent = item.org + ' ／ ' + item.title;
+    const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = '編輯';
+    edit.addEventListener('click', () => { document.querySelector('#news-edit').value = index; document.querySelector('#news-org').value = item.org; document.querySelector('#news-title').value = item.title; document.querySelector('#news-content').value = item.content; document.querySelector('#news-status').textContent = '正在編輯公告。'; });
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除公告';
+    remove.addEventListener('click', () => { if (!confirm('確定移除這則公告嗎？')) return; const next = readNews(); next.splice(index, 1); try { localStorage.setItem('毛日子協會公告', JSON.stringify(next)); renderNews(); document.querySelector('#news-status').textContent = '已移除公告。'; } catch (error) { document.querySelector('#news-status').textContent = '無法儲存，公告沒有變更。'; } });
+    row.append(label, edit, remove); manage.append(row);
+  });
+}
+const newsForm = document.querySelector('#news-form');
+newsForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const org = document.querySelector('#news-org').value.trim(); const title = document.querySelector('#news-title').value.trim(); const content = document.querySelector('#news-content').value.trim();
+  if (!org || !title || !content) { document.querySelector('#news-status').textContent = '請填寫協會名稱、標題與內容。'; return; }
+  const raw = document.querySelector('#news-edit').value; const news = readNews();
+  const item = {org, title, content, date:new Date().toLocaleDateString('zh-TW'), sample:false};
+  if (raw === '') news.unshift(item); else news[Number(raw)] = item;
+  try { localStorage.setItem('毛日子協會公告', JSON.stringify(news)); newsForm.reset(); document.querySelector('#news-edit').value = ''; renderNews(); document.querySelector('#news-status').textContent = '公告已儲存在目前瀏覽器。'; } catch (error) { document.querySelector('#news-status').textContent = '儲存失敗，請檢查瀏覽器儲存設定。'; }
+});
+document.querySelector('#news-clear').addEventListener('click', () => { newsForm.reset(); document.querySelector('#news-edit').value = ''; document.querySelector('#news-status').textContent = ''; });
+renderNews();
