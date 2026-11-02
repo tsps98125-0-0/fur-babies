@@ -49,12 +49,31 @@ document.querySelectorAll('[data-org]').forEach(button => button.addEventListene
   document.querySelector('#thank-you-card').hidden = true;
   donationForm.hidden = false;
 }));
-donationForm.addEventListener('submit', event => {
+// 贊助僅供練習，送出的是預覽紀錄，不代表付款。
+async function saveSponsorship(data) {
+  const response = await fetch('https://reqvlazljogqhdytjrvm.supabase.co/rest/v1/sponsorship_previews', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_-zrKonVr5tt62JMs-3lY4w_q_6kaZ9a', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error('儲存失敗');
+}
+donationForm.addEventListener('submit', async event => {
   event.preventDefault();
   const org = document.querySelector('#donation-org').value;
   const purpose = document.querySelector('#donation-purpose').value;
-  const amount = document.querySelector('#donation-amount').value;
-  document.querySelector('#donation-result').textContent = '贊助預覽：' + org + ' ／ 新臺幣 ' + amount + ' 元 ／ ' + purpose + '。尚未付款或寄送。';
+  const amount = Number(document.querySelector('#donation-amount').value);
+  if (!Number.isInteger(amount) || amount < 1 || amount > 10000000) { document.querySelector('#donation-result').textContent = '請輸入一元至一千萬元的整數金額。'; return; }
+  const submitButton = donationForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  document.querySelector('#donation-result').textContent = '正在送出贊助意願，請稍候。';
+  try {
+    await saveSponsorship({ category: '組織贊助', item: org, purpose, amount });
+    document.querySelector('#donation-result').textContent = '送出贊助心意：' + org + ' ／ 新臺幣 ' + amount + ' 元 ／ ' + purpose + '。尚未付款或寄送。';
+  } catch (error) {
+    document.querySelector('#donation-result').textContent = '贊助意願儲存失敗，請檢查網路後再試。';
+    return;
+  } finally { submitButton.disabled = false; }
   // 從目前組織的毛孩資料挑選有照片的一位，製作感謝明信片。
   const card = document.querySelector('#thank-you-card');
   card.replaceChildren();
@@ -68,7 +87,19 @@ donationForm.addEventListener('submit', event => {
   const note = document.createElement('small'); note.textContent = '示範明信片：尚未付款、寄送或完成贊助。';
   caption.append(heading, text, note); card.append(caption); card.hidden = false;
 });
-document.querySelectorAll('[data-plan]').forEach(button => button.addEventListener('click', () => openPopup('支持毛日子', '你選擇了「' + button.dataset.plan + '」。這是平台維護贊助的示範方案，目前尚未開放付款或發送獎勵。')));
+document.querySelectorAll('[data-plan]').forEach(button => button.addEventListener('click', async () => {
+  const [item, amountText] = button.dataset.plan.split(' ／ ');
+  const amount = Number(amountText.replace(' 元', ''));
+  button.disabled = true;
+  const waitingText = '正在儲存「' + item + '」的預覽紀錄，請稍候。';
+  openPopup('支持毛日子', waitingText);
+  try {
+    await saveSponsorship({ category: '平台贊助', item, purpose: '平台維護', amount });
+    if (!overlay.hidden && message.textContent === waitingText) message.textContent = '已儲存「' + button.dataset.plan + '」的預覽紀錄。這是示範方案，尚未付款或發送獎勵。';
+  } catch (error) {
+    if (!overlay.hidden && message.textContent === waitingText) message.textContent = '預覽紀錄儲存失敗，請檢查網路後再試。';
+  } finally { button.disabled = false; }
+}));
 document.querySelector('#join-button').addEventListener('click', () => openPopup('邀請組織加入', '謝謝你為動物付出。組織加入與資料刊登功能目前尚未開放。'));
 document.querySelector('#close-popup').addEventListener('click', closePopup);
 overlay.addEventListener('click', event => { if (event.target === overlay) closePopup(); });
