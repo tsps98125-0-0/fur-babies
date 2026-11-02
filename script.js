@@ -1,6 +1,6 @@
 // 這些是示範資料，正式上線時可替換成真實毛孩資訊。
 const animals = [
-  { name: '阿萌', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '約 1 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
+  { name: '阿萌', type: '狗狗', icon: '🐕', image: '肥萌.jpg', detail: '男生・約 1 歲', story: '喜歡曬太陽和散步，是個溫柔又親人的孩子。', org: '暖心動物之家' },
   { name: '花花', type: '貓咪', icon: '🐈', image: '花花.jpg', detail: '女生・約 1 歲', story: '有一點害羞，熟悉之後會悄悄靠近你。', org: '小小尾巴守護協會' },
   { name: '阿福', type: '狗狗', icon: '🐶', image: '阿福.jpg', detail: '男生・約 4 歲', story: '愛笑也愛撒嬌，希望每天都能和你一起玩。', org: '暖心動物之家' },
   { name: '小圓', type: '貓咪', icon: '🐱', image: '小圓.jpg', detail: '女生・約 2 歲', story: '喜歡安靜地陪伴，也喜歡被溫柔摸摸頭。', org: '小小尾巴守護協會' }
