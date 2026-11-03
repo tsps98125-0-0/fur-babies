@@ -117,10 +117,11 @@ donationForm.addEventListener('submit', async event => {
     document.querySelector('#donation-result').textContent = '贊助意願儲存失敗，請檢查網路後再試。';
     return;
   } finally { submitButton.disabled = false; }
-  // 從目前組織的毛孩資料挑選有照片的一位，製作感謝明信片。
+  // 從所選組織有照片的毛孩中隨機挑選，製作感謝明信片。
   const card = document.querySelector('#thank-you-card');
   card.replaceChildren();
-  const pet = animals.find(animal => animal.org === org && animal.image);
+  const candidates = animals.filter(animal => animal.org === org && animal.image);
+  const pet = candidates[Math.floor(Math.random() * candidates.length)];
   if (pet) {
     const photo = document.createElement('img'); photo.src = pet.image; photo.alt = org + '的毛孩' + pet.name + '照片'; card.append(photo);
   }
